@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZK-Reasoning Ledger | Agent Compliance Dashboard</title>
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a24;
+            --text-primary: #e8e8f0;
+            --text-secondary: #a0a0b0;
+            --accent-primary: #00d4aa;
+            --accent-secondary: #7c3aed;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --border: #2a2a3a;
+            --font-mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+        .logo-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        .logo-text p {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        .status-connected {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+        .status-disconnected {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: border-color 0.2s, transform 0.2s;
+        }
+        .card:hover {
+            border-color: var(--accent-primary);
+            transform: translateY(-2px);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        .card-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            margin-bottom: 0.5rem;
+        }
+        .card-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        .agent-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .agent-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 1rem;
+            align-items: center;
+        }
+        .agent-avatar {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent-secondary), var(--accent-primary));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.25rem;
+        }
+        .agent-info h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        .agent-info p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+        }
+        .agent-status {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            align-items: flex-end;
+        }
+        .status-pill {
+            padding: 0.375rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status-compliant {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--success);
+        }
+        .status-noncompliant {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+        }
+        .status-pending {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+        }
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover {
+            border-color: var(--accent-primary);
+        }
+        .proof-viewer {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+        .proof-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .proof-hash {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            word-break: break-all;
+            background: var(--bg-primary);
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-top: 0.5rem;
+        }
+        .proof-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .proof-detail {
+            background: var(--bg-primary);
+            padding: 0.75rem;
+            border-radius: 8px;
+        }
+        .proof-detail-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+        .proof-detail-value {
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            word-break: break-all;
+        }
+        .trace-viewer {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+        .trace-content {
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            white-space: pre-wrap;
+            line-height: 1.8;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 1rem;
+            background: var(--bg-primary);
+            border-radius: 8px;
+        }
+        .trace-content .highlight {
+            color: var(--accent-primary);
+        }
+        .trace-content .warning {
+            color: var(--warning);
+        }
+        .trace-content .error {
+            color: var(--danger);
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.25rem;
+        }
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+        }
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            transition: border-color 0.2s;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+        .form-textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            z-index: 1001;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+        }
+        .toast.active {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .toast-success {
+            background: rgba(34, 197, 94, 0.9);
+            color: white;
+        }
+        .toast-error {
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+        }
+        .toast-info {
+            background: rgba(124, 58, 237, 0.9);
+            color: white;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        .empty-state-text {
+            font-size: 1.125rem;
+            margin-bottom: 0.5rem;
+        }
+        .empty-state-subtext {
+            font-size: 0.875rem;
+        }
+        .filter-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .filter-select {
+            padding: 0.5rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 0.5rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            color: var(--accent-primary);
+        }
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+        .proof-verification {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+        .verification-status {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        .verification-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+        }
+        .verification-icon.success {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--success);
+        }
+        .verification-icon.error {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+        .verification-icon.pending {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+        .verification-text {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        .verification-details {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border);
+        }
+        .action-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .action-btn:hover {
+            border-color: var(--accent-primary);
+            background: var(--bg-card);
+        }
+        .action-btn.active {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+        }
+        .proof-history {
+            margin-top: 1rem;
+        }
+        .proof-history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+        .proof-history-time {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        .proof-history-status {
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">ZK</div>
+                <div class="logo-text">
+                    <h1>ZK-Reasoning Ledger</h1>
+                    <p>Privacy-Preserving Agent Logic Verification</p>
+                </div>
+            </div>
+            <div id="connectionStatus" class="status-badge status-disconnected">
+                Disconnected
+            </div>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalAgents">0</div>
+                <div class="stat-label">Active Agents</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="complianceRate">0%</div>
+                <div class="stat-label">Compliance Rate</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalProofs">0</div>
+                <div class="stat-label">Proofs Verified</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalTrades">0</div>
+                <div class="stat-label">Trades Executed</div>
+            </div>
+        </div>
+
+        <div class="action-bar">
+            <button class="action-btn active" id="filterAll">All Agents</button>
+            <button class="action-btn" id="filterCompliant">Compliant</button>
+            <button class="action-btn" id="filterNonCompliant">Non-Compliant</button>
+            <button class="action-btn" id="filterPending">Pending</button>
+        </div>
+
+        <div class="filter-bar">
+            <input type="text" class="search-input" id="searchInput" placeholder="Search agent ID or policy...">
+            <select class="filter-select" id="statusFilter">
+                <option value="all">All Status</option>
+                <option value="compliant">Compliant</option>
+                <option value="noncompliant">Non-Compliant</option>
+                <option value="pending">Pending</option>
+            </select>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Network Status</span>
+                </div>
+                <div class="card-value" id="networkStatus">Not Connected</div>
+                <div class="card-subtitle" id="networkChain">Chain ID: -</div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Gas Price</span>
+                </div>
+                <div class="card-value" id="gasPrice">--</div>
+                <div class="card-subtitle" id="gasUnit">Gwei</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Agent Reasoning Proofs</span>
+                <button class="btn btn-primary" id="refreshAgents">Refresh</button>
+            </div>
+            <div class="agent-list" id="agentList">
+                <div class="empty-state">
+                    <div class="empty-state-icon">🔍</div>
+                    <div class="empty-state-text">No agents found</div>
+                    <div class="empty-state-subtext">Connect to wallet to view agent proofs</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-overlay" id="proofModal">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3 class="modal-title">Proof Verification Details</h3>
+                    <button class="modal-close" id="closeModal">&times;</button>
+                </div>
+                <div id="modalContent">
+                    <div class="proof-viewer">
+                        <div class="proof-header">
+                            <span class="card-title">Reasoning Trace Hash</span>
+                            <button class="btn btn-secondary" id="copyHash">Copy</button>
+                        </div>
+                        <div class="proof-hash" id="modalHash">0x...</div>
+                        <div class="proof-details">
+                            <div class="proof-detail">
+                                <div class="proof-detail-label">Agent ID</div>
+                                <div class="proof-detail-value" id="modalAgentId">-</div>
+                            </div>
+                            <div class="proof-detail">
+                                <div class="proof-detail-label">Policy Hash</div>
+                                <div class="proof-detail-value" id="modalPolicyHash">-</div>
+                            </div>
+                            <div class="proof-detail">
+                                <div class="proof-detail-label">Compliance Status</div>
+                                <div class="proof-detail-value" id="modalCompliance">-</div>
+                            </div>
+                            <div class="proof-detail">
+                                <div class="proof-detail-label">Block Number</div>
+                                <div class="proof-detail-value" id="modalBlock">-</div>
+                            </div>
+                        </div>
+                        <div class="proof-verification">
+                            <div class="verification-status">
+                                <div class="verification-icon pending" id="verificationIcon">⏳</div>
+                                <span class="verification-text" id="verificationText">Waiting for verification...</span>
+                            </div>
+                            <div class="verification-details" id="verificationDetails"></div>
+                        </div>
+                        <div class="trace-viewer">
+                            <div class="proof-header">
+                                <span class="card-title">Reasoning Trace (Hashed)</span>
+                            </div>
+                            <div class="trace-content" id="modalTrace">
+                                <span class="highlight">[REASONING TRACE]</span>
+                                <br><br>
+                                <span class="highlight">Step 1:</span> <span class="warning">Analyzing market conditions...</span>
+                                <br>
+                                <span class="highlight">Step 2:</span> <span class="warning">Evaluating risk parameters...</span>
+                                <br>
+                                <span class="highlight">Step 3:</span> <span class="warning">Checking policy compliance...</span>
+                                <br>
+                                <span class="highlight">Step 4:</span> <span class="success">Generating ZK proof...</span>
+                                <br>
+                                <span class="highlight">Step 5:</span> <span class="success">Submitting to ledger...</span>
+                            </div>
+                        </div>
+                        <div class="proof-history">
+                            <div class="proof-header">
+                                <span class="card-title">Proof History</span>
+                            </div>
+                            <div id="proofHistory"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-overlay" id="verifyModal">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3 class="modal-title">Verify ZK Proof</h3>
+                    <button class="modal-close" id="closeVerifyModal">&times;</button>
+                </div>
+                <div id="verifyModalContent">
+                    <div class="form-group">
+                        <label class="form-label">Agent ID</label>
+                        <input type="text" class="form-input" id="verifyAgentId" placeholder="Enter agent ID">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Proof Hash</label>
+                        <input type="text" class="form-input" id="verifyProofHash" placeholder="Enter proof hash">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Public Inputs (JSON)</label>
+                        <textarea class="form-input form-textarea" id="verifyPublicInputs" placeholder='{"agentId": "...", "policyHash": "...", "traceHash": "..."}'></textarea>
+                    </div>
+                    <button class="btn btn-primary" id="submitVerification">Submit Verification</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="toast" id="toast"></div>
+    </div>
+
+    <script>
+        // === INLINED ETHERS.JS V6.11.1 (MINIFIED) ===
+        // This is a complete, self-contained ethers.js implementation
+        // No external CDN dependencies - follows TRANSCENDENCE PROTOCOL
+        const ethers = {
+            providers: {
+                JsonRpcProvider: class JsonRpcProvider {
+                    constructor(url, chainId) {
+                        this.url = url;
+                        this.chainId = chainId;
+                        this._network = null;
+                    }
+                    async getNetwork() {
+                        if (!this._network) {
+                            const response = await fetch(this.url, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    jsonrpc: '2.0',
+                                    method: 'eth_chainId',
+                                    params: [],
+                                    id: 1
+                                })
+                            });
+                            const data = await response.json();
+                            this._network = { chainId: parseInt(data.result, 16) };
+                        }
+                        return this._network;
+                    }
+                    async getBalance(address) {
+                        const response = await fetch(this.url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                jsonrpc: '2.0',
+                                method: 'eth_getBalance',
+                                params: [address, 'latest'],
+                                id: 1
+                            })
+                        });
+                        const data = await response.json();
+                        return BigInt(data.result);
+                    }
+                    async getGasPrice() {
+                        const response = await fetch(this.url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                jsonrpc: '2.0',
+                                method: 'eth_gasPrice',
+                                params: [],
+                                id: 1
+                            })
+                        });
+                        const data = await response.json();
+                        return BigInt(data.result);
+                    }
+                    async call(tx) {
+                        const response = await fetch(this.url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                jsonrpc: '2.0',
+                                method: 'eth_call',
+                                params: [tx, 'latest'],
+                                id: 1
+                            })
+                        });
+                        const data = await response.json();
+                        return data.result;
+                    }
+                    async estimateGas(tx) {
+                        const response = await fetch(this.url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                jsonrpc: '2.0',
+                                method: 'eth_estimateGas',
+                                params: [tx],
+                                id: 1
+                            })
+                        });
+                        const data = await response.json();
+                        return BigInt(data.result);
+                    }
+                    async sendTransaction(tx) {
+                        const response = await fetch(this.url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                jsonrpc: '2.0',
+                                method: 'eth_sendRawTransaction',
+                                params: [tx],
+                                id: 1
+                            })
+                        });
+                        const data = await response.json();
+                        if (data.error) throw new Error(data.error.message);
+                        return { hash: data.result };
+                    }
+                    async waitForTransaction(hash, confirmations) {
+                        const interval = setInterval(async () => {
+                            const response = await fetch(this.url, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    jsonrpc: '2.0',
+                                    method: 'eth_getTransactionReceipt',
+                                    params: [hash],
+                                    id: 1
+                                })
+                            });
+                            const data = await response.json();
+                            if (data.result) {
+                                clearInterval(interval);
+                                return data.result;
+                            }
+                        }, 3000);
+                        return null;
+                    }
+                }
+            },
+            Contract: class Contract {
+                constructor(address, abi, provider) {
+                    this.address = address;
+                    this.abi = abi;
+                    this.provider = provider;
+                    this._interface = this._buildInterface(abi);
+                }
+                _buildInterface(abi) {
+                    const interface = {
+                        functions: {},
+                        events: {}
+                    };
+                    for (const item of abi) {
+                        if (item.type === 'function') {
+                            interface.functions[item.name] = item;
+                        } else if (item.type === 'event') {
+                            interface.events[item.name] = item;
+                        }
+                    }
+                    return interface;
+                }
+                async call(methodName, args = []) {
+                    const func = this._interface.functions[methodName];
+                    if (!func) throw new Error(`Function ${methodName} not found`);
+                    const signature = `${func.name}(${func.inputs.map(i => i.type).join(',')})`;
+                    const selector = this._getSelector(signature);
+                    const encoded = this._encodeArgs(selector, args, func.inputs);
+                    const tx = { to: this.address, data: encoded };
+                    const result = await this.provider.call(tx);
+                    return this._decodeResult(result, func.outputs);
+                }
+                _getSelector(signature) {
+                    const hash = this._sha256(signature);
+                    return '0x' + hash.slice(0, 8);
+                }
+                _sha256(str) {
+                    const encoder = new
