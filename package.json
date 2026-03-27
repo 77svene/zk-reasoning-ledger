@@ -1,0 +1,63 @@
+{
+  "name": "zk-reasoning-ledger",
+  "version": "1.0.0",
+  "description": "ZK-circuit that generates Groth16 proofs of LLM reasoning trace semantic compliance against policy bytecode without exposing model weights or prompts",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "setup:env": "node src/setup/environment.js",
+    "compile:circuit": "circom circuits/reasoning_policy.circom --wasm --sym --r1cs",
+    "compile:policy": "node src/compile/policy_bytecode.js",
+    "generate:keys": "node src/generate/zkey_pipeline.js",
+    "prove:reasoning": "node src/proof/reasoning_prover.js",
+    "verify:proof": "node src/proof/proof_verifier.js",
+    "verify:policy": "node src/verify/policy_compliance.js",
+    "compile:contracts": "hardhat compile",
+    "deploy:local": "hardhat run scripts/deploy.js --network localhost",
+    "deploy:sepolia": "hardhat run scripts/deploy.js --network sepolia",
+    "test:unit": "hardhat test",
+    "test:integration": "node src/test/integration_suite.js",
+    "test:all": "npm run test:unit && npm run test:integration",
+    "audit:gas": "hardhat run scripts/audit_gas.js",
+    "clean": "hardhat clean && rm -rf circuits/*_js circuits/*.zkey circuits/*.wasm"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.0",
+    "circomlib": "^2.0.5",
+    "circomlibjs": "^0.1.7",
+    "ethers": "^6.11.0",
+    "snarkjs": "^0.7.2",
+    "semver": "^7.6.0",
+    "zod": "^3.22.4",
+    "merkletreejs": "^0.3.11"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.0",
+    "chai": "^4.4.0",
+    "dotenv": "^16.3.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT",
+  "keywords": [
+    "zero-knowledge",
+    "zk-snark",
+    "groth16",
+    "ai-compliance",
+    "reasoning-proof",
+    "policy-verification",
+    "erc-8004",
+    "trading-agent"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zk-reasoning-ledger/zk-reasoning-ledger.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zk-reasoning-ledger/zk-reasoning-ledger/issues"
+  },
+  "homepage": "https://github.com/zk-reasoning-ledger/zk-reasoning-ledger#readme",
+  "private": true
+}
