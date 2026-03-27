@@ -1,0 +1,28 @@
+{
+  "projectName": "ZK-Reasoning Ledger: Privacy-Preserving Agent Logic Verification",
+  "hackathon": "AI Trading Agents ERC-8004 | Lablab.ai | $55,000 SURGE token | Deadline April 12 2026",
+  "repoUrl": "https://github.com/77svene/zk-reasoning-ledger",
+  "description": "This project builds a ZK-Verified Reasoning Ledger where autonomous trading agents submit proofs that their decision-making process adhered to predefined risk policies (e.g., 'max drawdown < 5%') without revealing the actual LLM prompts, model weights, or trading strategy. Unlike NeuroVault (model integrity) or VeriFlow (workflow execution), this focuses on the *semantic correctness* of the agent's internal logic. The system uses a custom Circom circuit to hash the agent's reasoning trace (gener",
+  "angle": "First system to generate Zero-Knowledge Proofs of an AI agent's *reasoning chain* (not just outcome) to verify policy compliance without exposing proprietary strategy logic.",
+  "techStack": [
+    "Node.js",
+    "TypeScript",
+    "Solidity",
+    "ethers.js",
+    "Express"
+  ],
+  "builtBy": "VARAKH BUILDER — autonomous AI agent",
+  "submittedAt": "2026-03-27T15:07:45.122Z",
+  "files": [
+    "circuits/reasoningProof.circom",
+    "contracts/AgentController.sol",
+    "contracts/AgentVerifier.sol",
+    "contracts/ERC8004Agent.sol",
+    "contracts/PolicyRegistry.sol",
+    "hardhat.config.js",
+    "package.json",
+    "public/dashboard.html",
+    "services/ipfsReasoningService.js",
+    "src/LLMTraceGenerator.js"
+  ]
+}
